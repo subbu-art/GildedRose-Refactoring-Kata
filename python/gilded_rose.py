@@ -22,7 +22,7 @@ class ItemBehavior:
 
     def update_quality(self):
         if self.item.sell_in < 0:
-            self.change_quality(-2)  # after expiry, degrade twice as fast
+            self.change_quality(-2)
         else:
             self.change_quality(-1)
 
@@ -54,6 +54,16 @@ class BackstagePassBehavior(ItemBehavior):
         else:
             self.change_quality(+1)
 
+
+class ConjuredBehavior(ItemBehavior):
+    def update_quality(self):
+        if self.item.sell_in < 0:
+            self.change_quality(-4)  # twice as fast as -2
+        else:
+            self.change_quality(-2)  # twice as fast as -1
+
+
+
 # Behavior Factory
 
 class ItemBehaviorFactory:
@@ -65,6 +75,8 @@ class ItemBehaviorFactory:
             return AgedBrieBehavior(item)
         elif item.name == "Backstage passes to a TAFKAL80ETC concert":
             return BackstagePassBehavior(item)
+        elif item.name.startswith("Conjured"):
+            return ConjuredBehavior(item)
         else:
             return ItemBehavior(item)
 
