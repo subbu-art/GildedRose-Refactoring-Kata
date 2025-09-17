@@ -15,7 +15,7 @@ class GildedRoseTest(unittest.TestCase):
         self.assertEqual(-1, items[0].sell_in)
         # (cannot go below 0)
         self.assertEqual(0, items[0].quality)
-        
+
     # Aged Brie tests
     def test_aged_brie_increases_quality_before_sell_date(self):
         items = [Item("Aged Brie", 2, 0)]
@@ -143,6 +143,41 @@ class GildedRoseTest(unittest.TestCase):
         
         self.assertEqual(-1, items[0].sell_in)
         self.assertEqual(0, items[0].quality)
+    
+
+    # Conjured item tests
+    def test_conjured_item_loses_double_quality_pre_expiry(self):
+        items = [Item("Conjured Mana Cake", 3, 6)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(2, items[0].sell_in)
+        self.assertEqual(4, items[0].quality)  # -2
+
+    def test_conjured_item_loses_quad_quality_post_expiry(self):
+        items = [Item("Conjured Staff", 0, 8)]  # becomes expired
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(4, items[0].quality)  # -4
+
+    def test_conjured_item_quality_never_negative_even_when_excess_drop(self):
+        items = [Item("Conjured Potion", 1, 1)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(0, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)  # Cannot drop below 0
+
+    def test_conjured_item_quality_zero_when_small_and_expired(self):
+        items = [Item("Conjured Orb", 0, 3)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)  # -4, but floored at 0
+
 
 if __name__ == '__main__':
     unittest.main()
