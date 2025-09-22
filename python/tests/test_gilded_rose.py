@@ -9,8 +9,175 @@ class GildedRoseTest(unittest.TestCase):
         items = [Item("foo", 0, 0)]
         gilded_rose = GildedRose(items)
         gilded_rose.update_quality()
-        self.assertEqual("fixme", items[0].name)
+        # Error showed 'fixme' != 'foo' - item names don't change
+        self.assertEqual("foo", items[0].name)
+        # decreases by 1 each day (0 -> -1)
+        self.assertEqual(-1, items[0].sell_in)
+        # (cannot go below 0)
+        self.assertEqual(0, items[0].quality)
 
+    # Aged Brie tests
+    def test_aged_brie_increases_quality_before_sell_date(self):
+        items = [Item("Aged Brie", 2, 0)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
         
+        self.assertEqual(1, items[0].sell_in)
+        self.assertEqual(1, items[0].quality)  # +1
+    
+    def test_aged_brie_increases_quality_on_sell_date(self):
+        items = [Item("Aged Brie", 1, 10)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(0, items[0].sell_in)
+        self.assertEqual(11, items[0].quality)  # +1
+    def test_aged_brie_increases_quality_twice_after_sell_date(self):
+        items = [Item("Aged Brie", 0, 10)]  # Will become sell_in = -1
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(12, items[0].quality)
+    def test_aged_brie_quality_cannot_exceed_50(self):
+        items = [Item("Aged Brie", 2, 50)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(1, items[0].sell_in)
+        self.assertEqual(50, items[0].quality)  # Stays at 50
+    def test_aged_brie_near_max_quality_after_sell_date(self):
+        items = [Item("Aged Brie", 0, 49)]  #treis to add 2, but caps at 50
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(50, items[0].quality)  # 49 + 1 = 50 (second +1 blocked by cap)
+
+    # Sulfuras tests
+    def test_sulfuras_quality_never_decreases(self):
+        items = [Item("Sulfuras, Hand of Ragnaros", 0, 80)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(0, items[0].sell_in)   
+        self.assertEqual(80, items[0].quality)
+    def test_sulfuras_works_when_expired(self):
+        items = [Item("Sulfuras, Hand of Ragnaros", -1, 80)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        self.assertEqual(-1, items[0].sell_in)  
+        self.assertEqual(80, items[0].quality)
+    def test_sulfuras_ignores_quality_limits(self):
+        items = [Item("Sulfuras, Hand of Ragnaros", 5, 100)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(5, items[0].sell_in)   # No change 
+        self.assertEqual(100, items[0].quality)
+
+    # Backstage Pass tests
+    def test_backstage_pass_increases_for_far_away(self):
+        items = [Item("Backstage passes to a TAFKAL80ETC concert", 15, 20)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(14, items[0].sell_in)
+        self.assertEqual(21, items[0].quality)  # +1 only
+    def test_backstage_pass_increases_faster_with_10_days_left(self):
+        items = [Item("Backstage passes to a TAFKAL80ETC concert", 10, 20)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(9, items[0].sell_in)
+        self.assertEqual(22, items[0].quality) # +1 base + 1 bonus = +2
+    def test_backstage_pass_increases_faster_with_5_days_left(self):
+        items = [Item("Backstage passes to a TAFKAL80ETC concert", 5, 20)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(4, items[0].sell_in)
+        self.assertEqual(23, items[0].quality)  # +1 base + 1 + 1 bonus = +3
+    def test_backstage_pass_becomes_worthless_after_concert(self):
+        items = [Item("Backstage passes to a TAFKAL80ETC concert", 0, 20)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)  # Drops to 0!
+    def test_backstage_pass_respects_quality_cap(self):
+        items = [Item("Backstage passes to a TAFKAL80ETC concert", 5, 49)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(4, items[0].sell_in)
+        self.assertEqual(50, items[0].quality)
+    
+    # Regular item tests
+    def test_regular_item_decreases_quality_before_sell_date(self):
+        items = [Item("Normal Sword", 5, 10)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(4, items[0].sell_in)
+        self.assertEqual(9, items[0].quality)  # -1
+    
+    def test_regular_item_decreases_quality_twice_after_sell_date(self):
+        items = [Item("Old Shield", 0, 10)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(8, items[0].quality)
+    def test_regular_item_quality_no_negative(self):
+        items = [Item("Broken Armor", 1, 0)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(0, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)   # Stays 0
+    def test_regular_item_quality_expires(self):
+        items = [Item("Rusty Weapon", 0, 1)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)
+    
+
+    # Conjured item tests
+    def test_conjured_item_loses_double_quality_pre_expiry(self):
+        items = [Item("Conjured Mana Cake", 3, 6)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(2, items[0].sell_in)
+        self.assertEqual(4, items[0].quality)  # -2
+
+    def test_conjured_item_loses_quad_quality_post_expiry(self):
+        items = [Item("Conjured Staff", 0, 8)]  # becomes expired
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(4, items[0].quality)  # -4
+
+    def test_conjured_item_quality_never_negative_even_when_excess_drop(self):
+        items = [Item("Conjured Potion", 1, 1)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(0, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)  # Cannot drop below 0
+
+    def test_conjured_item_quality_zero_when_small_and_expired(self):
+        items = [Item("Conjured Orb", 0, 3)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+
+        self.assertEqual(-1, items[0].sell_in)
+        self.assertEqual(0, items[0].quality)  # -4, but floored at 0
+
+
 if __name__ == '__main__':
     unittest.main()
